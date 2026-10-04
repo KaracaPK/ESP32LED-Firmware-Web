@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart LED Flasher – อัปโหลดเฟิร์มแวร์ผ่าน USB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1c;
+    --panel: #111827;
+    --panel-2: #0d1423;
+    --line: #232c42;
+    --text: #e8ecf5;
+    --muted: #8b95ad;
+    --orange: #ff9a3c;
+    --orange-ink: #1a0f00;
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #60a5fa;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px 14px 40px; }
+  header { text-align: center; padding: 8px 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: .2px; }
+  h1 em { font-style: normal; color: var(--orange); }
+  .sub { margin-top: 6px; color: var(--muted); font-size: 13px; }
+  .pill {
+    display: inline-block; margin-left: 6px; padding: 1px 10px; border-radius: 999px;
+    border: 1px solid var(--orange); color: var(--orange); font-weight: 600; font-size: 12px;
+  }
+  .pill.ok { border-color: var(--green); color: var(--green); }
+  .pill.bad { border-color: var(--red); color: var(--red); }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .grid .panel { margin-bottom: 0; }
+  .grid { margin-bottom: 14px; }
+  .panel h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; }
+
+  .notice { border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 13.5px; border: 1px solid var(--line); background: var(--panel-2); }
+  .notice.warn { border-color: #7a4a14; background: #1e1407; color: #ffd9a8; }
+  .notice.err { border-color: #7f1d1d; background: #1f0a0a; color: #fecaca; }
+  .notice a, .notice button.link { color: var(--orange); }
+  .notice ul { margin: 6px 0 0; padding-left: 20px; }
+
+  dl { margin: 0; display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; word-break: break-word; }
+  dd.mono { font-family: var(--mono); font-size: 13px; }
+
+  .ports { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .ports li {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;
+  }
+  .ports li.active { border-color: var(--orange); }
+  .ports .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: none; }
+  .ports li.active .dot { background: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,.2); }
+  .ports .name { font-weight: 600; }
+  .ports .ids { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+  .empty { color: var(--muted); padding: 10px 2px; font-size: 14px; }
+
+  label { display: block; color: var(--muted); font-size: 13px; margin: 14px 0 6px; }
+  select, input[type=text] {
+    width: 100%; min-height: 46px; padding: 0 12px; border-radius: 8px;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--text); font: inherit;
+  }
+  input[type=file] { color: var(--muted); font: inherit; max-width: 100%; }
+
+  .btn {
+    appearance: none; border: 0; cursor: pointer; font: inherit; font-weight: 700;
+    min-height: 48px; padding: 0 18px; border-radius: 8px; width: 100%;
+    background: var(--orange); color: var(--orange-ink);
+  }
+  .btn.green { background: var(--green); color: #04210f; }
+  .btn.red { background: var(--red); color: #fff; }
+  .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  .stack { display: grid; gap: 10px; }
+
+  .progress { height: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin-top: 14px; }
+  .progress > i { display: block; height: 100%; width: 0; background: var(--orange); transition: width .15s linear; }
+  .pct { margin-top: 6px; color: var(--muted); font-size: 13px; min-height: 20px; }
+
+  pre#log {
+    margin: 12px 0 0; background: #060a14; border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 12px; height: 200px; overflow: auto; font-family: var(--mono); font-size: 12px;
+    color: #b7c2db; white-space: pre-wrap; word-break: break-all;
+  }
+  .hint { color: var(--muted); font-size: 13px; margin-top: 10px; }
+  .hint b { color: var(--text); }
+  .switch {
+    display: flex; align-items: flex-start; gap: 12px; margin: 16px 0 0; padding: 12px 14px;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;
+    cursor: pointer; color: var(--text); font-size: 15px;
+  }
+  .switch.on { border-color: var(--red); }
+  .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .switch .track { flex: none; width: 46px; height: 26px; border-radius: 999px; background: #2a344d; position: relative; margin-top: 2px; transition: background .15s; }
+  .switch .knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #cbd5e1; transition: transform .15s; }
+  .switch input:checked + .track { background: var(--red); }
+  .switch input:checked + .track .knob { transform: translateX(20px); background: #fff; }
+  .switch input:focus-visible + .track { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .switch small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; line-height: 1.5; }
+  .tag { display: inline-block; margin-left: 8px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid var(--orange); color: var(--orange); }
+  .tag.ok { border-color: var(--green); color: var(--green); }
+  @media (prefers-reduced-motion: reduce) { .progress > i, .switch .track, .switch .knob { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Smart <em>LED</em> Flasher</h1>
+    <div class="sub">อัปโหลดเฟิร์มแวร์ไปยัง ESP32-C3 SuperMini ผ่าน USB <span class="pill" id="supportPill">กำลังตรวจสอบ</span></div>
+  </header>
+
+  <div id="notices"></div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>ข้อมูลบอร์ด</h2>
+      <dl>
+        <dt>สถานะ</dt><dd id="bState">ยังไม่ได้เชื่อมต่อ</dd>
+        <dt>ชิป</dt><dd id="bChip">-</dd>
+        <dt>MAC</dt><dd id="bMac" class="mono">-</dd>
+        <dt>ฟีเจอร์</dt><dd id="bFeat">-</dd>
+        <dt>ขนาดแฟลช</dt><dd id="bFlash">-</dd>
+      </dl>
+      <div class="stack" style="margin-top:16px">
+        <button class="btn" id="btnConnect">เชื่อมต่อบอร์ด</button>
+        <button class="btn ghost" id="btnDisconnect" disabled>ตัดการเชื่อมต่อ</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>พอร์ตที่เชื่อมต่อ</h2>
+      <ul class="ports" id="portList"></ul>
+      <div class="hint">เบราว์เซอร์จะแสดงเฉพาะพอร์ตที่คุณเคยอนุญาตแล้ว กด “เชื่อมต่อบอร์ด” เพื่อเลือกพอร์ตใหม่</div>
+      <div class="stack" style="margin-top:12px">
+        <button class="btn ghost" id="btnRefresh">รีเฟรชรายการพอร์ต</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>เฟิร์มแวร์</h2>
+    <dl>
+      <dt>เวอร์ชันบน GitHub</dt><dd id="fVer">กำลังโหลด…</dd>
+      <dt>ขนาดไฟล์</dt><dd id="fSize">-</dd>
+      <dt>แฟลชล่าสุด</dt><dd id="fLast">-</dd>
+    </dl>
+
+    <div class="row">
+      <div>
+        <label for="fwSource">แหล่งไฟล์</label>
+        <select id="fwSource">
+          <option value="cloud">ล่าสุดจาก GitHub (ota/firmware.bin)</option>
+          <option value="file">เลือกไฟล์ .bin จากเครื่อง</option>
+        </select>
+      </div>
+      <div>
+        <label for="addr">ตำแหน่งเขียน (address)</label>
+        <select id="addr">
+          <option value="0x10000">0x10000 – ไฟล์แอป (แบบเดียวกับไฟล์ OTA)</option>
+          <option value="0x0">0x0 – ไฟล์รวม bootloader (merged)</option>
+        </select>
+      </div>
+    </div>
+    <div id="fileRow" hidden>
+      <label for="fwFile">ไฟล์เฟิร์มแวร์</label>
+      <input type="file" id="fwFile" accept=".bin">
+    </div>
+
+    <label class="switch" id="wipeBox" for="wipe">
+      <input type="checkbox" id="wipe">
+      <span class="track"><span class="knob"></span></span>
+      <span>
+        <b>ล้างข้อมูลบอร์ดก่อนอัปโหลด</b>
+        <small>ลบค่าตั้งค่าไฟทั้งหมดและ WiFi บ้านที่บันทึกไว้ (เหมือนปุ่ม “รีเซ็ตค่าทั้งหมด” บนเว็บบอร์ด) ถ้าปิดไว้ ค่าเดิมจะยังอยู่</small>
+      </span>
+    </label>
+
+    <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+    <div class="pct" id="pct" role="status" aria-live="polite"></div>
+
+    <div class="stack" style="margin-top:8px">
+      <button class="btn green" id="btnFlash" disabled>อัปโหลดเฟิร์มแวร์</button>
+    </div>
+    <div class="hint">
+      <b>ถ้าเชื่อมต่อไม่ติด:</b> กดปุ่ม BOOT บนบอร์ดค้างไว้ แล้วเสียบสาย USB (หรือกด RESET ขณะค้าง BOOT) จากนั้นกดเชื่อมต่อใหม่
+    </div>
+    <pre id="log" aria-label="บันทึกการทำงาน"></pre>
+  </section>
+</div>
+
+<script src="config.js"></script>
+<script type="module">
+const CFG = window.FLASHER_CONFIG || {};
+const RAW = CFG.rawBase;
+const P = CFG.partitions || {};
+const NVS_ADDR = P.nvs && P.nvs.addr,         NVS_SIZE = P.nvs && P.nvs.size;
+const OTADATA_ADDR = P.otadata && P.otadata.addr, OTADATA_SIZE = P.otadata && P.otadata.size;
+const APP0_ADDR = P.app0 && P.app0.addr;
+const ESPTOOL_URL = CFG.esptoolUrl, POLYFILL_URL = CFG.polyfillUrl;
+
+const $ = id => document.getElementById(id);
+const ua = navigator.userAgent;
+const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/i.test(ua);
+
+let serialApi = null;      // navigator.serial or the WebUSB polyfill
+let usingPolyfill = false;
+let port = null, transport = null, loader = null;
+let busy = false, connected = false;
+let cloud = { version: null, size: null };
+let boardMac = null;
+
+/* ---------- helpers ---------- */
+function log(msg) {
+  const el = $('log');
+  el.textContent += msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function notice(html, kind = '') {
+  const d = document.createElement('div');
+  d.className = 'notice ' + kind;
+  d.innerHTML = html;
+  $('notices').appendChild(d);
+}
+function setPill(text, cls) {
+  const p = $('supportPill');
+  p.textContent = text;
+  p.className = 'pill ' + (cls || '');
+}
+function hex4(n) { return n.toString(16).padStart(4, '0'); }
+function fmtBytes(n) { return n >= 1048576 ? (n / 1048576).toFixed(2) + ' MB' : (n / 1024).toFixed(1) + ' KB'; }
+function setBusy(b) { busy = b; updateButtons(); }
+function updateButtons() {
+  $('btnConnect').disabled = busy || connected || !serialApi;
+  $('btnDisconnect').disabled = busy || !connected;
+  $('btnFlash').disabled = busy || !connected;
+  $('btnRefresh').disabled = busy || !serialApi;
+}
+function progress(p, text) {
+  $('bar').style.width = p + '%';
+  $('pct').textContent = text || '';
+}
+function store(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
+function load(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+
+const VENDORS = {
+  0x303a: 'Espressif USB Serial/JTAG',
+  0x10c4: 'Silicon Labs CP210x',
+  0x1a86: 'WCH CH340/CH343',
+  0x0403: 'FTDI'
+};
+
+/* ---------- browser support ---------- */
+async function initSupport() {
+  if (!CFG.rawBase) {
+    setPill('ตั้งค่าไม่ครบ', 'bad');
+    notice('ไม่พบไฟล์ <b>config.js</b> กรุณาวางไว้โฟลเดอร์เดียวกับ index.html', 'err');
+    updateButtons();
+    return;
+  }
+  if (!window.isSecureContext) {
+    notice('หน้านี้ต้องเปิดผ่าน <b>HTTPS</b> หรือ <b>localhost</b> เท่านั้น เบราว์เซอร์จึงจะอนุญาตให้ใช้พอร์ต USB (เช่น โฮสต์บน GitHub Pages)', 'err');
+  }
+  if ('serial' in navigator) {
+    serialApi = navigator.serial;
+    setPill(isAndroid ? 'รองรับ (Web Serial)' : 'รองรับ (Web Serial)', 'ok');
+  } else if ('usb' in navigator) {
+    try {
+      const m = await import(POLYFILL_URL);
+      serialApi = m.serial || (m.default && m.default.serial);
+      usingPolyfill = true;
+      setPill('รองรับ (WebUSB)', 'ok');
+      notice('โหมด Android ใช้ WebUSB ต่อสายผ่าน OTG ได้เฉพาะ <b>Chrome / Edge</b> บน Android ถ้าบอร์ดไม่ตอบสนอง ให้ลองเข้าโหมด BOOT ตามคำแนะนำด้านล่าง', 'warn');
+    } catch (e) {
+      log('โหลด WebUSB polyfill ไม่สำเร็จ: ' + e.message);
+    }
+  }
+  if (!serialApi) {
+    setPill('ไม่รองรับ', 'bad');
+    if (isIOS) {
+      notice('<b>iPhone / iPad ไม่รองรับการอัปโหลดผ่าน USB</b> เพราะ Safari และเบราว์เซอร์ทุกตัวบน iOS ไม่มี Web Serial / WebUSB<ul><li>ใช้คอมพิวเตอร์ (Chrome / Edge) หรือโทรศัพท์ Android แทน</li><li>หรืออัปเดตผ่าน Wi-Fi โดยใช้ระบบ OTA ของบอร์ดเอง</li></ul>', 'err');
+    } else {
+      notice('เบราว์เซอร์นี้ไม่รองรับ Web Serial / WebUSB กรุณาใช้ <b>Chrome</b> หรือ <b>Edge</b> (คอมพิวเตอร์ หรือ Android)', 'err');
+    }
+  } else {
+    try {
+      serialApi.addEventListener('connect', refreshPorts);
+      serialApi.addEventListener('disconnect', e => {
+        if (port && e.target === port) { log('พอร์ตถูกถอดออก'); resetBoardUI(); }
+        refreshPorts();
+      });
+    } catch (e) {}
+  }
+  updateButtons();
+}
+
+/* ---------- ports ---------- */
+async function refreshPorts() {
+  const ul = $('portList');
+  ul.innerHTML = '';
+  if (!serialApi) { ul.innerHTML = '<li class="empty">ไม่รองรับบนเบราว์เซอร์นี้</li>'; return; }
+  let ports = [];
+  try { ports = await serialApi.getPorts(); } catch (e) { log('อ่านรายการพอร์ตไม่ได้: ' + e.message); }
+  if (!ports.length) {
+    ul.innerHTML = '<li class="empty">ยังไม่มีพอร์ตที่อนุญาต – เสียบบอร์ดแล้วกด “เชื่อมต่อบอร์ด”</li>';
+    return;
+  }
+  ports.forEach((p, i) => {
+    const info = (p.getInfo && p.getInfo()) || {};
+    const vid = info.usbVendorId, pid = info.usbProductId;
+    const li = document.createElement('li');
+    if (connected && p === port) li.className = 'active';
+    const name = vid ? (VENDORS[vid] || 'USB Serial') : 'Serial port';
+    li.innerHTML = '<span class="dot"></span><div><div class="name"></div><div class="ids"></div></div>';
+    li.querySelector('.name').textContent = `พอร์ต ${i + 1}: ${name}` + (connected && p === port ? ' (เชื่อมต่ออยู่)' : '');
+    li.querySelector('.ids').textContent = vid ? `VID:PID ${hex4(vid)}:${hex4(pid || 0)}` : 'ไม่ทราบ VID/PID';
+    ul.appendChild(li);
+  });
+}
+
+/* ---------- cloud firmware ---------- */
+async function loadCloudInfo() {
+  try {
+    const t = Date.now();
+    const v = await fetch(RAW + CFG.versionFile + '?t=' + t, { cache: 'no-store' });
+    if (!v.ok) throw new Error('HTTP ' + v.status);
+    const txt = (await v.text()).trim();
+    cloud.version = /^\d+$/.test(txt) ? parseInt(txt, 10) : null;   // เฟิร์มแวร์ใช้เลข build จำนวนเต็ม (version.txt)
+    $('fVer').textContent = cloud.version !== null ? 'build ' + cloud.version : (txt || '(ว่าง)');
+  } catch (e) {
+    $('fVer').textContent = 'โหลดไม่ได้';
+    log('อ่าน version.txt ไม่ได้: ' + e.message);
+  }
+  try {
+    const r = await fetch(RAW + CFG.firmwareFile + '?t=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+    const len = r.headers.get('content-length');
+    if (len) { cloud.size = +len; $('fSize').textContent = fmtBytes(cloud.size); }
+    else { $('fSize').textContent = 'ทราบตอนดาวน์โหลด'; }
+  } catch (e) { $('fSize').textContent = '-'; }
+  showLast();
+}
+function showLast() {
+  const el = $('fLast');
+  el.textContent = '';
+  if (!boardMac) { el.textContent = 'ต้องเชื่อมต่อบอร์ดก่อน'; return; }
+  let rec = null;
+  try { rec = JSON.parse(load('lastv2:' + boardMac) || 'null'); } catch (e) {}
+  if (!rec) { el.textContent = 'ยังไม่เคยแฟลชผ่านหน้านี้'; return; }
+  el.textContent = (rec.build !== null && rec.build !== undefined ? 'build ' + rec.build : rec.label) + ' – ' + rec.time;
+  if (cloud.version !== null && rec.build !== null && rec.build !== undefined) {
+    const t = document.createElement('span');
+    if (cloud.version > rec.build) { t.className = 'tag'; t.textContent = 'มีเวอร์ชันใหม่กว่า'; }
+    else { t.className = 'tag ok'; t.textContent = 'เป็นเวอร์ชันล่าสุด'; }
+    el.appendChild(t);
+  }
+}
+async function getFirmwareBytes() {
+  if ($('fwSource').value === 'file') {
+    const f = $('fwFile').files[0];
+    if (!f) throw new Error('ยังไม่ได้เลือกไฟล์ .bin');
+    return { bytes: new Uint8Array(await f.arrayBuffer()), label: f.name, build: null };
+  }
+  log('กำลังดาวน์โหลด firmware.bin …');
+  const r = await fetch(RAW + CFG.firmwareFile + '?t=' + Date.now(), { cache: 'no-store' });
+  if (!r.ok) throw new Error('ดาวน์โหลดไม่สำเร็จ (HTTP ' + r.status + ')');
+  return { bytes: new Uint8Array(await r.arrayBuffer()), label: 'cloud', build: cloud.version };
+}
+function toBinaryString(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return s;
+}
+
+/* ---------- board connect / flash ---------- */
+function resetBoardUI() {
+  connected = false; port = null; transport = null; loader = null; boardMac = null;
+  $('bState').textContent = 'ยังไม่ได้เชื่อมต่อ';
+  ['bChip', 'bMac', 'bFeat', 'bFlash'].forEach(id => $(id).textContent = '-');
+  progress(0, '');
+  showLast();
+  updateButtons();
+  refreshPorts();
+}
+
+async function connectBoard() {
+  setBusy(true);
+  try {
+    const opts = usingPolyfill ? { filters: [{ usbVendorId: 0x303a }, { usbVendorId: 0x10c4 }, { usbVendorId: 0x1a86 }, { usbVendorId: 0x0403 }] } : undefined;
+    port = await serialApi.requestPort(opts);
+    $('bState').textContent = 'กำลังเชื่อมต่อ…';
+    log('โหลดเครื่องมือ esptool-js …');
+    const { ESPLoader, Transport } = await import(ESPTOOL_URL);
+    transport = new Transport(port, false);
+    const terminal = { clean() {}, writeLine: d => log(d), write: d => { log(String(d).replace(/\n$/, '')); } };
+    loader = new ESPLoader({ transport, baudrate: CFG.baudrate, romBaudrate: CFG.romBaudrate, terminal });
+    const desc = await loader.main();
+    connected = true;
+    $('bState').textContent = 'เชื่อมต่อแล้ว';
+    $('bChip').textContent = desc || (loader.chip && loader.chip.CHIP_NAME) || 'ESP32';
+    try { boardMac = (await loader.chip.readMac(loader)).toUpperCase(); $('bMac').textContent = boardMac; } catch (e) {}
+    try { const f = await loader.chip.getChipFeatures(loader); $('bFeat').textContent = f.join(', '); } catch (e) {}
+    try { $('bFlash').textContent = await loader.detectFlashSize(); } catch (e) {}
+    showLast();
+    log('เชื่อมต่อสำเร็จ');
+  } catch (e) {
+    if (e && e.name === 'NotFoundError') { log('ยกเลิกการเลือกพอร์ต'); }
+    else {
+      log('เชื่อมต่อไม่สำเร็จ: ' + (e && e.message ? e.message : e));
+      notice('เชื่อมต่อไม่สำเร็จ ลองกด BOOT ค้างแล้วเสียบ USB ใหม่ และตรวจว่าไม่มีโปรแกรมอื่น (Arduino IDE, Serial Monitor) เปิดพอร์ตอยู่', 'warn');
+    }
+    try { if (transport) await transport.disconnect(); } catch (_) {}
+    resetBoardUI();
+  } finally {
+    setBusy(false);
+    refreshPorts();
+  }
+}
+
+async function disconnectBoard(hardReset) {
+  setBusy(true);
+  try {
+    if (hardReset && loader) { try { await loader.after('hard_reset'); log('ส่งคำสั่งรีสตาร์ทบอร์ดแล้ว'); } catch (e) { log('รีสตาร์ทบอร์ดอัตโนมัติไม่สำเร็จ: ' + (e && e.message ? e.message : e)); } }
+    if (transport) await transport.disconnect();
+  } catch (e) { log('ตัดการเชื่อมต่อ: ' + e.message); }
+  log('ตัดการเชื่อมต่อแล้ว');
+  resetBoardUI();
+  setBusy(false);
+}
+
+async function flash() {
+  if (!connected || !loader) return;
+  const wipe = $('wipe').checked;
+  if (wipe && !confirm('ยืนยันล้างข้อมูลบอร์ด?\n\nค่าตั้งค่าไฟทั้งหมดและ WiFi บ้านที่บันทึกไว้จะถูกลบ และกู้คืนไม่ได้')) return;
+  setBusy(true);
+  try {
+    const { bytes, label, build } = await getFirmwareBytes();
+    if (bytes[0] !== 0xE9) throw new Error('ไฟล์นี้ไม่ใช่ไฟล์เฟิร์มแวร์ ESP32 (ไบต์แรกต้องเป็น 0xE9)');
+    const cloudMode = $('fwSource').value === 'cloud';
+    const address = cloudMode ? APP0_ADDR : parseInt($('addr').value, 16);
+
+    // รายการที่จะเขียน เรียงตามตำแหน่งจากน้อยไปมาก
+    const stages = [];
+    if (wipe) stages.push({ name: 'ล้างข้อมูลบอร์ด', address: NVS_ADDR, data: '\xff'.repeat(NVS_SIZE) });
+    if (address === APP0_ADDR) {
+      // ถ้าเคยอัปเดตผ่าน OTA ตัวบูตอาจชี้ไปที่ app1 อยู่ ต้องล้าง otadata เพื่อให้บูตจาก app0 ที่เพิ่งเขียน
+      stages.push({ name: 'รีเซ็ตตัวเลือกบูต', address: OTADATA_ADDR, data: '\xff'.repeat(OTADATA_SIZE) });
+    }
+    stages.push({ name: 'อัปโหลดเฟิร์มแวร์', address, data: toBinaryString(bytes) });
+    const totalRaw = stages.reduce((n, st) => n + st.data.length, 0);
+
+    if (wipe) log(`ล้างพื้นที่ข้อมูล 0x${NVS_ADDR.toString(16)} (${NVS_SIZE / 1024} KB)`);
+    log(`เขียนเฟิร์มแวร์ ${fmtBytes(bytes.length)} ไปที่ 0x${address.toString(16)} …`);
+    progress(0, 'กำลังเริ่ม…');
+    await loader.writeFlash({
+      fileArray: stages.map(st => ({ data: st.data, address: st.address })),
+      flashSize: 'keep', flashMode: 'keep', flashFreq: 'keep',
+      eraseAll: false, compress: true,
+      reportProgress: (idx, written, total) => {
+        const before = stages.slice(0, idx).reduce((n, st) => n + st.data.length, 0);
+        const frac = total ? written / total : 0;
+        const p = Math.min(100, Math.round((before + stages[idx].data.length * frac) / totalRaw * 100));
+        progress(p, `${stages[idx].name} ${p}%`);
+      }
+    });
+    progress(100, 'อัปโหลดเสร็จแล้ว กำลังรีสตาร์ทบอร์ด…');
+    log(wipe ? 'อัปโหลดสำเร็จ (ล้างข้อมูลบอร์ดแล้ว)' : 'อัปโหลดสำเร็จ');
+    if (boardMac) store('lastv2:' + boardMac, JSON.stringify({ build, label, time: new Date().toLocaleString('th-TH') }));
+    await disconnectBoard(true);
+    $('pct').textContent = 'เสร็จสิ้น – ถ้าบอร์ดไม่ทำงาน ให้ถอดสาย USB แล้วเสียบใหม่';
+  } catch (e) {
+    log('ผิดพลาด: ' + (e && e.message ? e.message : e));
+    $('pct').textContent = 'อัปโหลดไม่สำเร็จ – ดูรายละเอียดในบันทึกด้านล่าง';
+    setBusy(false);
+  }
+}
+
+/* ---------- wire up ---------- */
+$('btnConnect').addEventListener('click', connectBoard);
+$('btnDisconnect').addEventListener('click', () => disconnectBoard(false));
+$('btnFlash').addEventListener('click', flash);
+$('btnRefresh').addEventListener('click', refreshPorts);
+function syncSource() {
+  const file = $('fwSource').value === 'file';
+  $('fileRow').hidden = !file;
+  $('addr').disabled = !file;            // ไฟล์จาก GitHub เป็นไฟล์แอปเสมอ -> 0x10000
+  if (!file) $('addr').value = '0x10000';
+}
+$('fwSource').addEventListener('change', syncSource);
+$('wipe').addEventListener('change', e => $('wipeBox').classList.toggle('on', e.target.checked));
+syncSource();
+
+await initSupport();
+await refreshPorts();
+if (CFG.rawBase) loadCloudInfo();
+</script>
+</body>
+</html>
